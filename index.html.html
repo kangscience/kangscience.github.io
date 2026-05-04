@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>語音辨識測試</title>
+
+<style>
+body {
+    font-family: Arial;
+    text-align: center;
+    background: #f0f4f8;
+    padding: 30px;
+}
+
+h1 {
+    margin-bottom: 20px;
+}
+
+button {
+    padding: 15px 25px;
+    font-size: 18px;
+    margin: 10px;
+    cursor: pointer;
+    border: none;
+    border-radius: 10px;
+}
+
+#startBtn { background: #4CAF50; color: white; }
+#stopBtn { background: #f44336; color: white; }
+
+#result {
+    margin-top: 20px;
+    font-size: 22px;
+    min-height: 60px;
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+#status {
+    margin-top: 10px;
+    color: #555;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🎤 語音辨識</h1>
+
+<button id="startBtn">開始錄音</button>
+<button id="stopBtn">停止錄音</button>
+
+<div id="status">狀態：尚未開始</div>
+
+<div id="result">（辨識結果會顯示在這裡）</div>
+
+<script>
+let recognition;
+let finalTranscript = "";
+
+// 檢查瀏覽器支援
+if (!('webkitSpeechRecognition' in window)) {
+    alert("你的瀏覽器不支援語音辨識，請使用 Chrome");
+} else {
+
+    recognition = new webkitSpeechRecognition();
+
+    recognition.lang = "en-US";          // 語言
+    recognition.continuous = true;       // 持續辨識
+    recognition.interimResults = true;   // 即時結果
+
+    recognition.onstart = function() {
+        document.getElementById("status").innerText = "狀態：錄音中...";
+    };
+
+    recognition.onend = function() {
+        document.getElementById("status").innerText = "狀態：已停止";
+    };
+
+    recognition.onerror = function(event) {
+        document.getElementById("status").innerText = "錯誤：" + event.error;
+    };
+
+    recognition.onresult = function(event) {
+        let interimTranscript = "";
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            let transcript = event.results[i][0].transcript;
+
+            if (event.results[i].isFinal) {
+                finalTranscript += transcript + " ";
+            } else {
+                interimTranscript += transcript;
+            }
+        }
+
+        document.getElementById("result").innerText =
+            finalTranscript + interimTranscript;
+    };
+}
+
+// 開始錄音
+document.getElementById("startBtn").onclick = function() {
+    finalTranscript = ""; // 每次重新開始清空
+    recognition.start();
+};
+
+// 停止錄音
+document.getElementById("stopBtn").onclick = function() {
+    recognition.stop();
+
+    // ⭐ 這裡可以傳回 Google Sites / Apps Script
+    const resultText = finalTranscript.trim();
+
+    console.log("最終結果：", resultText);
+
+    // ===== 如果你要跳回 Google Sites（取消註解）=====
+    /*
+    window.location.href =
+      "https://sites.google.com/你的網站?result=" +
+      encodeURIComponent(resultText);
+    */
+
+    // ===== 如果你要傳到 Apps Script（取消註解）=====
+    /*
+    fetch("你的Apps Script網址", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({speech: resultText})
+    });
+    */
+};
+</script>
+
+</body>
+</html>

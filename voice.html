@@ -1,10 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Voice Recorder</title>
+
+<style>
+body {
+    font-family: Arial;
+    text-align: center;
+    padding: 30px;
+    background: #f5f5f5;
+}
+
+h2 {
+    margin-bottom: 20px;
+}
+
+#status {
+    font-size: 20px;
+    margin-top: 20px;
+    color: #333;
+}
+
+#result {
+    margin-top: 20px;
+    font-size: 22px;
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    min-height: 60px;
+}
+
+button {
+    padding: 12px 20px;
+    font-size: 18px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 20px;
+    background: #4CAF50;
+    color: white;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🎤 語音辨識中</h2>
+
+<div id="status">準備中...</div>
+<div id="result"></div>
+
+<button onclick="start()">重新錄音</button>
+
 <script>
 
-let recognition;
+/* ===== 防白幕保護 ===== */
+window.onerror = function(msg){
+    document.body.innerHTML =
+        "❌ 發生錯誤：<br>" + msg;
+};
 
+/* ===== 取得主頁傳來的 target ===== */
 const params = new URLSearchParams(window.location.search);
 const target = params.get("target") || "";
 
+/* ===== 主程式 ===== */
 function start(){
 
     const SpeechRecognition =
@@ -12,42 +73,58 @@ function start(){
 
     if (!SpeechRecognition) {
         document.getElementById("status").innerText =
-            "❌ 此裝置不支援語音";
+            "❌ 此裝置不支援語音辨識";
         return;
     }
 
-    recognition = new SpeechRecognition();
+    let recognition = new SpeechRecognition();
     recognition.lang = "en-US";
     recognition.continuous = false;
     recognition.interimResults = false;
 
-    recognition.onstart = () => {
-        document.getElementById("status").innerText = "🎤 錄音中...";
+    recognition.onstart = function(){
+        document.getElementById("status").innerText = "🎤 正在聽...";
     };
 
-    recognition.onresult = (event) => {
+    recognition.onresult = function(event){
 
         let text = event.results[0][0].transcript;
 
         document.getElementById("result").innerHTML =
-            "你說：<br>" + text;
+            "你說：<br><b>" + text + "</b>";
 
-        // ⭐ 回主頁
-        window.location.href =
-          "https://kangscience.github.io/?spoken=" +
-          encodeURIComponent(text) +
-          "&target=" +
-          encodeURIComponent(target);
-    };
-
-    recognition.onerror = () => {
         document.getElementById("status").innerText =
-            "❌ 錄音失敗";
+            "完成 ✔";
+
+        /* ===== 回主頁（重要） ===== */
+        setTimeout(function(){
+
+            window.location.href =
+                "https://kangscience.github.io/?spoken=" +
+                encodeURIComponent(text) +
+                "&target=" +
+                encodeURIComponent(target);
+
+        }, 800);
     };
 
-    recognition.start();
+    recognition.onerror = function(e){
+        document.getElementById("status").innerText =
+            "❌ 錯誤：" + e.error;
+    };
+
+    try {
+        recognition.start();
+    } catch (e) {
+        document.getElementById("status").innerText =
+            "❌ 無法啟動：" + e.message;
+    }
 }
 
+/* ===== 自動開始 ===== */
 start();
 
 </script>
+
+</body>
+</html>

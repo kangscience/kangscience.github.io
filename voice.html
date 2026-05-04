@@ -2,14 +2,14 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>Voice Recorder</title>
+<title>Voice Page</title>
 
 <style>
 body {
     font-family: Arial;
     text-align: center;
     padding: 30px;
-    background: #f5f5f5;
+    background: #f4f4f4;
 }
 
 h2 {
@@ -46,26 +46,34 @@ button {
 
 <body>
 
-<h2>🎤 語音辨識中</h2>
+<h2>🎤 語音辨識</h2>
 
-<div id="status">準備中...</div>
+<div id="status">請按下按鈕開始說話</div>
 <div id="result"></div>
 
-<button onclick="start()">重新錄音</button>
+<button onclick="start()">🎤 開始錄音</button>
 
 <script>
 
-/* ===== 防白幕保護 ===== */
-window.onerror = function(msg){
+/* =========================
+   防白屏錯誤偵測
+========================= */
+window.onerror = function(msg, src, line, col, err){
     document.body.innerHTML =
-        "❌ 發生錯誤：<br>" + msg;
+        "<h2>❌ 發生錯誤</h2>" +
+        "<pre>" + msg + "</pre>" +
+        "<p>Line: " + line + "</p>";
 };
 
-/* ===== 取得主頁傳來的 target ===== */
+/* =========================
+   取得主頁參數
+========================= */
 const params = new URLSearchParams(window.location.search);
 const target = params.get("target") || "";
 
-/* ===== 主程式 ===== */
+/* =========================
+   語音主程式
+========================= */
 function start(){
 
     const SpeechRecognition =
@@ -96,7 +104,9 @@ function start(){
         document.getElementById("status").innerText =
             "完成 ✔";
 
-        /* ===== 回主頁（重要） ===== */
+        /* =========================
+           回主頁（Apps Script / index）
+        ========================= */
         setTimeout(function(){
 
             window.location.href =
@@ -117,12 +127,9 @@ function start(){
         recognition.start();
     } catch (e) {
         document.getElementById("status").innerText =
-            "❌ 無法啟動：" + e.message;
+            "❌ 啟動失敗：" + e.message;
     }
 }
-
-/* ===== 自動開始 ===== */
-start();
 
 </script>
 

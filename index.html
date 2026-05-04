@@ -133,6 +133,24 @@ document.getElementById("stopBtn").onclick = function() {
     });
     */
 };
+window.onload = function(){
+
+    const params = new URLSearchParams(window.location.search);
+
+    let spoken = params.get("spoken");
+    let target = params.get("target");
+
+    if(spoken && target){
+
+        document.getElementById("targetText").innerText = target;
+
+        showText(spoken);
+        processResult(spoken);
+
+        // 清 URL（避免重整重算）
+        window.history.replaceState({}, document.title, "/");
+    }
+};
 </script>
 
 </body>

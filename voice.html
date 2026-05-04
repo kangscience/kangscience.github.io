@@ -96,32 +96,26 @@ function start(){
 
     recognition.onresult = function(event){
 
-        let text = event.results[0][0].transcript;
+    let text = event.results[0][0].transcript;
 
-        document.getElementById("result").innerHTML =
-            "你說：<br><b>" + text + "</b>";
+    document.getElementById("result").innerHTML =
+        "你說：<br><b>" + text + "</b>";
 
-        document.getElementById("status").innerText =
-            "完成 ✔";
+    document.getElementById("status").innerText = "完成 ✔";
 
-        /* =========================
-           回主頁（Apps Script / index）
-        ========================= */
-        setTimeout(function(){
+    // ⭐ 把資料傳回主頁（關鍵）
+    if (window.opener) {
+        window.opener.postMessage({
+            spoken: text,
+            target: target
+        }, "*");
+    }
 
-            window.location.href =
-              "https://script.google.com/macros/s/AKfycbyygAVoOYUTdNgyJGyIzgYfBBRhzTcoeLA0DwP8MFdVYPWzggCp85KBiE35tksLx-4/exec?spoken=" +
-              encodeURIComponent(text) +
-              "&target=" +
-              encodeURIComponent(target);
-
-        }, 800);
-    };
-
-    recognition.onerror = function(e){
-        document.getElementById("status").innerText =
-            "❌ 錯誤：" + e.error;
-    };
+    // ⭐ 關閉語音頁
+    setTimeout(function(){
+        window.close();
+    }, 500);
+};
 
     try {
         recognition.start();

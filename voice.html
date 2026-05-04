@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>語音辨識</title>
+</head>
+
+<body style="text-align:center;font-family:Arial;">
+
+<h2>🎤 語音辨識中</h2>
+
+<p id="status">準備中...</p>
+<p id="result"></p>
+
+<script>
+
+let recognition;
+
+const params = new URLSearchParams(window.location.search);
+const target = params.get("target") || "";
+
+function start(){
+
+    const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+
+    recognition.onstart = () => {
+        document.getElementById("status").innerText = "🎤 錄音中...";
+    };
+
+    recognition.onresult = (event) => {
+
+        let text = event.results[0][0].transcript;
+
+        document.getElementById("result").innerHTML =
+            "你說：<br>" + text;
+
+        window.location.href =
+            "https://kangscience.github.io/?spoken=" +
+            encodeURIComponent(text) +
+            "&target=" +
+            encodeURIComponent(target);
+    };
+
+    recognition.onerror = () => {
+        document.getElementById("status").innerText =
+            "❌ 錄音失敗";
+    };
+
+    recognition.start();
+}
+
+start();
+
+</script>
+
+</body>
+</html>

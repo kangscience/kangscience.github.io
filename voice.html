@@ -39,10 +39,10 @@ function start(){
             "你說：<br>" + text;
 
         window.location.href =
-            "https://kangscience.github.io/?spoken=" +
-            encodeURIComponent(text) +
-            "&target=" +
-            encodeURIComponent(target);
+          "https://kangscience.github.io/?spoken=" +
+          encodeURIComponent(resultText) +
+          "&target=" +
+          encodeURIComponent(target);
     };
 
     recognition.onerror = () => {

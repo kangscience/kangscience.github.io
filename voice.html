@@ -2,44 +2,76 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>Voice Page</title>
+<title>語音辨識</title>
 
 <style>
 body {
-    font-family: Arial;
+    font-family: Arial, sans-serif;
     text-align: center;
     padding: 30px;
-    background: #f4f4f4;
-}
-
-h2 {
-    margin-bottom: 20px;
-}
-
-#status {
-    font-size: 20px;
-    margin-top: 20px;
-    color: #333;
-}
-
-#result {
-    margin-top: 20px;
-    font-size: 22px;
-    background: white;
-    padding: 15px;
-    border-radius: 10px;
-    min-height: 60px;
-}
-
-button {
-    padding: 12px 20px;
-    font-size: 18px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-top: 20px;
-    background: #4CAF50;
+    background: #121212;
     color: white;
+}
+
+/* 標題 */
+h2 {
+    color: #facc15;
+}
+
+/* 卡片 */
+.card {
+    margin: 15px auto;
+    padding: 20px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+}
+
+/* 區塊 */
+.target-card { background: #1e293b; }
+.result-card { background: #1f2937; }
+
+/* 朗讀句子 */
+.target-label {
+    font-size: 14px;
+    color: #9ca3af;
+}
+
+.target-text {
+    font-size: 26px;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+/* 狀態 */
+#status {
+    margin-top: 15px;
+    font-size: 18px;
+    color: #ccc;
+}
+
+/* 辨識結果 */
+#result {
+    margin-top: 10px;
+    font-size: 22px;
+    min-height: 40px;
+}
+
+/* 按鈕 */
+button {
+    margin-top: 20px;
+    padding: 15px 25px;
+    font-size: 18px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(45deg, #ef4444, #f97316);
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    transform: scale(1.05);
 }
 </style>
 </head>
@@ -48,8 +80,16 @@ button {
 
 <h2>🎤 語音辨識</h2>
 
+<!-- ✅ 顯示要朗讀的句子 -->
+<div class="card target-card">
+    <div id="targetText"></div>
+</div>
+
 <div id="status">請按下按鈕開始說話</div>
-<div id="result"></div>
+
+<div class="card result-card">
+    <div id="result"></div>
+</div>
 
 <button onclick="start()">🎤 開始錄音</button>
 
@@ -58,7 +98,7 @@ button {
 /* =========================
    防白屏錯誤偵測
 ========================= */
-window.onerror = function(msg, src, line, col, err){
+window.onerror = function(msg, src, line){
     document.body.innerHTML =
         "<h2>❌ 發生錯誤</h2>" +
         "<pre>" + msg + "</pre>" +
@@ -66,13 +106,23 @@ window.onerror = function(msg, src, line, col, err){
 };
 
 /* =========================
-   取得主頁參數
+   取得主頁傳來的句子
 ========================= */
 const params = new URLSearchParams(window.location.search);
 const target = params.get("target") || "";
 
 /* =========================
-   語音主程式
+   顯示朗讀句子
+========================= */
+window.onload = function(){
+
+    document.getElementById("targetText").innerHTML =
+        "<div class='target-label'>請朗讀：</div>" +
+        "<div class='target-text'>" + target + "</div>";
+};
+
+/* =========================
+   語音辨識
 ========================= */
 function start(){
 
@@ -96,26 +146,31 @@ function start(){
 
     recognition.onresult = function(event){
 
-    let text = event.results[0][0].transcript;
+        let text = event.results[0][0].transcript;
 
-    document.getElementById("result").innerHTML =
-        "你說：<br><b>" + text + "</b>";
+        document.getElementById("result").innerHTML =
+            "你說：<br><b>" + text + "</b>";
 
-    document.getElementById("status").innerText = "完成 ✔";
+        document.getElementById("status").innerText = "完成 ✔";
 
-    // ⭐ 把資料傳回主頁（關鍵）
-    if (window.opener) {
-        window.opener.postMessage({
-            spoken: text,
-            target: target
-        }, "*");
-    }
+        /* ⭐ 回主頁 */
+        if (window.opener) {
+            window.opener.postMessage({
+                spoken: text,
+                target: target
+            }, "*");
+        }
 
-    // ⭐ 關閉語音頁
-    setTimeout(function(){
-        window.close();
-    }, 500);
-};
+        /* ⭐ 關閉視窗 */
+        setTimeout(function(){
+            window.close();
+        }, 500);
+    };
+
+    recognition.onerror = function(){
+        document.getElementById("status").innerText =
+            "❌ 錄音失敗";
+    };
 
     try {
         recognition.start();

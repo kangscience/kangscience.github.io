@@ -184,14 +184,19 @@ function fixSentence(spoken, target){
         let s = spokenWords[i] || "";
         let t = targetWords[i];
 
+        // 完全正確
         if (s === t) {
             fixed.push(t);
         }
+        // Soundex / 拼字相似
         else if (
             soundex(s) === soundex(t) ||
-            similarity(s, t) > 0.5 ||
-            (s.length <= 3 && t.length <= 5)
+            similarity(s, t) > 0.5
         ){
+            fixed.push(t);
+        }
+        // ⭐ 關鍵：長度接近 → 強制用 target
+        else if (Math.abs(s.length - t.length) <= 2) {
             fixed.push(t);
         }
         else {
@@ -201,7 +206,6 @@ function fixSentence(spoken, target){
 
     return fixed.join(" ");
 }
-
 /* =========================
    🎤 語音辨識
 ========================= */

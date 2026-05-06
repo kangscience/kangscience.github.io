@@ -13,12 +13,10 @@ body {
     color: white;
 }
 
-/* 標題 */
 h2 {
     color: #facc15;
 }
 
-/* 卡片 */
 .card {
     margin: 15px auto;
     padding: 20px;
@@ -28,11 +26,9 @@ h2 {
     box-shadow: 0 8px 20px rgba(0,0,0,0.4);
 }
 
-/* 區塊 */
 .target-card { background: #1e293b; }
 .result-card { background: #1f2937; }
 
-/* 朗讀句子 */
 .target-label {
     font-size: 14px;
     color: #9ca3af;
@@ -44,21 +40,18 @@ h2 {
     margin-top: 10px;
 }
 
-/* 狀態 */
 #status {
     margin-top: 15px;
     font-size: 18px;
     color: #ccc;
 }
 
-/* 辨識結果 */
 #result {
     margin-top: 10px;
     font-size: 22px;
     min-height: 40px;
 }
 
-/* 按鈕 */
 button {
     margin-top: 20px;
     padding: 15px 25px;
@@ -80,7 +73,7 @@ button:hover {
 
 <h2>🎤 語音辨識</h2>
 
-<!-- ✅ 顯示要朗讀的句子 -->
+<!-- 顯示句子 -->
 <div class="card target-card">
     <div id="targetText"></div>
 </div>
@@ -96,7 +89,7 @@ button:hover {
 <script>
 
 /* =========================
-   防白屏錯誤偵測
+   防白屏錯誤
 ========================= */
 window.onerror = function(msg, src, line){
     document.body.innerHTML =
@@ -106,21 +99,77 @@ window.onerror = function(msg, src, line){
 };
 
 /* =========================
-   取得主頁傳來的句子
+   取得參數
 ========================= */
 const params = new URLSearchParams(window.location.search);
 const target = params.get("target") || "";
 
 /* =========================
-   顯示朗讀句子
+   顯示句子
 ========================= */
-console.log("target =", target);    
-window.onload = function(){
+window.addEventListener("DOMContentLoaded", function(){
 
-    document.getElementById("targetText").innerHTML =
+    console.log("target =", target);
+
+    const el = document.getElementById("targetText");
+
+    if(!target){
+        el.innerHTML = "<span style='color:red'>⚠ 沒收到句子</span>";
+        return;
+    }
+
+    el.innerHTML =
         "<div class='target-label'>請朗讀：</div>" +
         "<div class='target-text'>" + target + "</div>";
-};
+});
+
+/* =========================
+   Soundex（發音比對）
+========================= */
+function soundex(s) {
+    if (!s) return "";
+    const a = s.toLowerCase().split('');
+    const f = a.shift();
+
+    const codes = {
+        a: '', e: '', i: '', o: '', u: '',
+        b: 1, f: 1, p: 1, v: 1,
+        c: 2, g: 2, j: 2, k: 2, q: 2, s: 2, x: 2, z: 2,
+        d: 3, t: 3,
+        l: 4,
+        m: 5, n: 5,
+        r: 6
+    };
+
+    let output = f;
+    let prev = codes[f];
+
+    for (let i = 0; i < a.length; i++) {
+        let code = codes[a[i]];
+        if (code !== prev) {
+            if (code !== '') output += code;
+        }
+        prev = code;
+    }
+
+    return (output + "000").slice(0,4);
+}
+
+/* =========================
+   相似度
+========================= */
+function similarity(a, b) {
+    if (!a || !b) return 0;
+
+    let same = 0;
+    let len = Math.max(a.length, b.length);
+
+    for (let i = 0; i < Math.min(a.length, b.length); i++) {
+        if (a[i] === b[i]) same++;
+    }
+
+    return same / len;
+}
 
 /* =========================
    語音辨識
@@ -162,10 +211,10 @@ function start(){
             }, "*");
         }
 
-        /* ⭐ 關閉視窗 */
+        /* ⭐ 關閉 */
         setTimeout(function(){
             window.close();
-        }, 500);
+        }, 800);
     };
 
     recognition.onerror = function(){

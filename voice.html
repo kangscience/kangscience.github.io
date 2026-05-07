@@ -27,8 +27,13 @@ h2 {
     box-shadow: 0 8px 20px rgba(0,0,0,0.4);
 }
 
-.target-card { background: #1e293b; }
-.result-card { background: #1f2937; }
+.target-card {
+    background: #1e293b;
+}
+
+.result-card {
+    background: #1f2937;
+}
 
 .target-label {
     font-size: 14px;
@@ -75,17 +80,23 @@ button:hover {
 
 <h2>🎤 語音辨識</h2>
 
+<!-- 要朗讀的句子 -->
 <div class="card target-card">
     <div id="targetText"></div>
 </div>
 
-<div id="status">請按下按鈕開始說話</div>
+<div id="status">
+請按下按鈕開始說話
+</div>
 
+<!-- 辨識結果 -->
 <div class="card result-card">
     <div id="result"></div>
 </div>
 
-<button onclick="start()">🎤 開始錄音</button>
+<button onclick="start()">
+🎤 開始錄音
+</button>
 
 <script>
 
@@ -93,6 +104,7 @@ button:hover {
    防白屏
 ========================= */
 window.onerror = function(msg, src, line){
+
     document.body.innerHTML =
         "<h2>❌ 發生錯誤</h2>" +
         "<pre>" + msg + "</pre>" +
@@ -103,9 +115,24 @@ window.onerror = function(msg, src, line){
    取得 target
 ========================= */
 const params = new URLSearchParams(window.location.search);
+
 const target = params.get("target") || "";
 
+/* =========================
+   顯示 target
+========================= */
+window.onload = function(){
+
+    document.getElementById("targetText").innerHTML =
+        "<div class='target-label'>請朗讀：</div>" +
+        "<div class='target-text'>" + target + "</div>";
+};
+
+/* =========================
+   正規化
+========================= */
 function normalize(str){
+
     return str
         .toLowerCase()
         .replace(/[^\w\s]/g,"")
@@ -113,123 +140,147 @@ function normalize(str){
         .trim();
 }
 
-/* 顯示句子 */
-window.onload = function(){
-    document.getElementById("targetText").innerHTML =
-        "<div class='target-label'>請朗讀：</div>" +
-        "<div class='target-text'>" + target + "</div>";
-};
-
 /* =========================
-   相似度
+   字母相似度
 ========================= */
 function similarity(a, b){
+
+    if(!a || !b) return 0;
+
     let same = 0;
+
     let len = Math.max(a.length, b.length);
 
     for(let i=0;i<Math.min(a.length,b.length);i++){
-        if(a[i]===b[i]) same++;
+
+        if(a[i] === b[i]){
+            same++;
+        }
     }
 
     return same / len;
 }
 
 /* =========================
-   ⭐ 句子修正（重點）
-========================= */
-function fixSentence(spoken, target){
-
-    let sWords = normalize(spoken).split(" ");
-    let tWords = normalize(target).split(" ");
-
-    let result = [];
-
-    tWords.forEach(t => {
-
-        let best = "";
-        let bestScore = 0;
-
-        sWords.forEach(s => {
-
-            let score = 0;
-
-            if (s === t) score = 1;
-            else score = similarity(s, t);
-
-            if (score > bestScore) {
-                bestScore = score;
-                best = s;
-            }
-        });
-
-        // ⭐ 如果有接近 → 用 target
-        if (bestScore > 0.5) {
-            result.push(t);
-        } else {
-            result.push(best || "");
-        }
-
-    });
-
-    return result.join(" ");
-}
-
-/* =========================
-   🎤 語音
+   語音辨識
 ========================= */
 function start(){
 
     const SpeechRecognition =
-        window.SpeechRecognition || window.webkitSpeechRecognition;
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
+
         document.getElementById("status").innerText =
-            "❌ 不支援語音辨識";
+            "❌ 此裝置不支援語音辨識";
+
         return;
     }
 
     let recognition = new SpeechRecognition();
+
     recognition.lang = "en-US";
+
     recognition.continuous = false;
+
     recognition.interimResults = false;
 
+    /* 開始錄音 */
     recognition.onstart = function(){
-        document.getElementById("status").innerText = "🎤 正在聽...";
+
+        document.getElementById("status").innerText =
+            "🎤 正在聽...";
     };
 
+    /* 辨識成功 */
     recognition.onresult = function(event){
 
         let raw = event.results[0][0].transcript;
 
-        // ⭐ 修正句子
-        let fixed = fixSentence(raw, target);
+        let finalText = raw;
 
+        // ⭐ 只有單字才修正
+        let rawWords = normalize(raw).split(/\s+/);
+
+        let targetWords =
+            normalize(target).split(/\s+/);
+
+        if(
+            rawWords.length === 1 &&
+            targetWords.length === 1
+        ){
+
+            if(
+                similarity(
+                    rawWords[0],
+                    targetWords[0]
+                ) > 0.4 ||
+
+                Math.abs(
+                    rawWords[0].length -
+                    targetWords[0].length
+                ) <= 2
+            ){
+                finalText = target;
+            }
+        }
+
+        /* 顯示結果 */
         document.getElementById("result").innerHTML =
+
             "<div style='font-size:14px;color:#9ca3af'>你說的是：</div>" +
-            "<div style='margin-top:8px;font-weight:bold'>" + fixed + "</div>";
 
-        document.getElementById("status").innerText = "完成 ✔";
+            "<div style='margin-top:10px;font-weight:bold'>" +
 
-        // ⭐ 回主頁
-        if (window.opener) {
+            finalText +
+
+            "</div>";
+
+        document.getElementById("status").innerText =
+            "完成 ✔";
+
+        /* 回主頁 */
+        if(window.opener){
+
             window.opener.postMessage({
-                spoken: fixed,
+
+                spoken: finalText,
+
                 raw: raw,
+
                 target: target
+
             }, "*");
         }
 
-        setTimeout(()=>{
+        /* 關閉視窗 */
+        setTimeout(function(){
+
             window.close();
+
         }, 800);
     };
 
-    recognition.onerror = function(){
+    /* 錯誤 */
+    recognition.onerror = function(event){
+
         document.getElementById("status").innerText =
-            "❌ 錄音失敗";
+
+            "❌ 錄音失敗：" + event.error;
     };
 
-    recognition.start();
+    /* 啟動 */
+    try{
+
+        recognition.start();
+
+    }catch(e){
+
+        document.getElementById("status").innerText =
+
+            "❌ 啟動失敗：" + e.message;
+    }
 }
 
 </script>

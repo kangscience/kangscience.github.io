@@ -85,19 +85,18 @@ button:hover {
     <div id="targetText"></div>
 </div>
 
-
 <button onclick="start()">
 🎤 開始錄音
 </button>
+
 <div id="status">
 請按下按鈕開始說話
-</div>    
+</div>
+
 <!-- 辨識結果 -->
 <div class="card result-card">
     <div id="result"></div>
 </div>
-
-
 
 <script>
 
@@ -142,24 +141,90 @@ function normalize(str){
 }
 
 /* =========================
-   字母相似度
+   編輯距離
 ========================= */
-function similarity(a, b){
+function levenshtein(a, b){
 
-    if(!a || !b) return 0;
+    const matrix = [];
 
-    let same = 0;
+    for(let i = 0; i <= b.length; i++){
+        matrix[i] = [i];
+    }
 
-    let len = Math.max(a.length, b.length);
+    for(let j = 0; j <= a.length; j++){
+        matrix[0][j] = j;
+    }
 
-    for(let i=0;i<Math.min(a.length,b.length);i++){
+    for(let i = 1; i <= b.length; i++){
 
-        if(a[i] === b[i]){
-            same++;
+        for(let j = 1; j <= a.length; j++){
+
+            if(b.charAt(i - 1) === a.charAt(j - 1)){
+
+                matrix[i][j] = matrix[i - 1][j - 1];
+
+            }else{
+
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j] + 1
+                );
+            }
         }
     }
 
-    return same / len;
+    return matrix[b.length][a.length];
+}
+
+/* =========================
+   單字容錯判定
+========================= */
+function shouldFixWord(rawWord, targetWord){
+
+    rawWord = normalize(rawWord);
+
+    targetWord = normalize(targetWord);
+
+    // 完全相同
+    if(rawWord === targetWord){
+        return true;
+    }
+
+    // 開頭相同
+    let sameStart =
+        rawWord.charAt(0) === targetWord.charAt(0);
+
+    // 長度接近
+    let lenClose =
+        Math.abs(rawWord.length - targetWord.length) <= 2;
+
+    // 編輯距離
+    let distance =
+        levenshtein(rawWord, targetWord);
+
+    // know -> no 類型
+    let specialSoundLike =
+        (
+            targetWord.includes(rawWord) ||
+            rawWord.includes(targetWord)
+        ) &&
+        sameStart;
+
+    // 判定
+    if(
+        (
+            sameStart &&
+            lenClose &&
+            distance <= 2
+        )
+        ||
+        specialSoundLike
+    ){
+        return true;
+    }
+
+    return false;
 }
 
 /* =========================
@@ -197,33 +262,40 @@ function start(){
     /* 辨識成功 */
     recognition.onresult = function(event){
 
-        let raw = event.results[0][0].transcript;
+        let raw =
+            event.results[0][0].transcript;
+
+        let confidence =
+            event.results[0][0].confidence;
 
         let finalText = raw;
 
-        // ⭐ 只有單字才修正
-        let rawWords = normalize(raw).split(/\s+/);
+        let rawWords =
+            normalize(raw).split(/\s+/);
 
         let targetWords =
             normalize(target).split(/\s+/);
 
+        /* =========================
+           單字修正
+        ========================= */
         if(
             rawWords.length === 1 &&
             targetWords.length === 1
         ){
 
             if(
-                similarity(
+                shouldFixWord(
                     rawWords[0],
                     targetWords[0]
-                ) > 0.8 ||
-
-                Math.abs(
-                    rawWords[0].length -
-                    targetWords[0].length
-                ) <= 2
+                )
             ){
-                finalText = target;
+
+                // confidence太低才修正
+                if(confidence < 0.95){
+
+                    finalText = target;
+                }
             }
         }
 

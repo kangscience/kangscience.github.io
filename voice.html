@@ -141,6 +141,46 @@ function normalize(str){
 }
 
 /* =========================
+   同音字字典
+========================= */
+const homophones = {
+
+    "know": ["no"],
+
+    "no": ["know"],
+
+    "write": ["right"],
+
+    "right": ["write"],
+
+    "sea": ["see"],
+
+    "see": ["sea"],
+
+    "week": ["weak"],
+
+    "weak": ["week"],
+
+    "two": ["to","too"],
+
+    "to": ["two","too"],
+
+    "too": ["two","to"],
+
+    "weather": ["whether"],
+
+    "whether": ["weather"],
+
+    "flower": ["flour"],
+
+    "flour": ["flower"],
+
+    "son": ["sun"],
+
+    "sun": ["son"]
+};
+
+/* =========================
    編輯距離
 ========================= */
 function levenshtein(a, b){
@@ -191,35 +231,31 @@ function shouldFixWord(rawWord, targetWord){
         return true;
     }
 
+    // 同音字修正
+    if(
+        homophones[targetWord] &&
+        homophones[targetWord].includes(rawWord)
+    ){
+        return true;
+    }
+
     // 開頭相同
     let sameStart =
         rawWord.charAt(0) === targetWord.charAt(0);
 
     // 長度接近
     let lenClose =
-        Math.abs(rawWord.length - targetWord.length) <= 2;
+        Math.abs(rawWord.length - targetWord.length) <= 1;
 
     // 編輯距離
     let distance =
         levenshtein(rawWord, targetWord);
 
-    // know -> no 類型
-    let specialSoundLike =
-        (
-            targetWord.includes(rawWord) ||
-            rawWord.includes(targetWord)
-        ) &&
-        sameStart;
-
-    // 判定
+    // 拼字小錯誤
     if(
-        (
-            sameStart &&
-            lenClose &&
-            distance <= 2
-        )
-        ||
-        specialSoundLike
+        sameStart &&
+        lenClose &&
+        distance <= 1
     ){
         return true;
     }
@@ -291,8 +327,8 @@ function start(){
                 )
             ){
 
-                // confidence太低才修正
-                if(confidence < 0.95){
+                // confidence低才修正
+                if(confidence < 0.96){
 
                     finalText = target;
                 }
@@ -308,6 +344,14 @@ function start(){
 
             finalText +
 
+            "</div>" +
+
+            "<div style='margin-top:8px;font-size:13px;color:#9ca3af'>" +
+
+            "辨識信心值：" +
+
+            confidence.toFixed(2) +
+
             "</div>";
 
         document.getElementById("status").innerText =
@@ -322,7 +366,9 @@ function start(){
 
                 raw: raw,
 
-                target: target
+                target: target,
+
+                confidence: confidence
 
             }, "*");
         }
@@ -332,7 +378,7 @@ function start(){
 
             window.close();
 
-        }, 800);
+        }, 1000);
     };
 
     /* 錯誤 */

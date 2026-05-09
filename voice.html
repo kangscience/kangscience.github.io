@@ -23,7 +23,7 @@ h2 {
     padding: 20px;
     border-radius: 16px;
     width: 90%;
-    max-width: 500px;
+    max-width: 700px;
     box-shadow: 0 8px 20px rgba(0,0,0,0.4);
 }
 
@@ -35,43 +35,57 @@ h2 {
     background: #1f2937;
 }
 
+/* 標籤 */
 .target-label {
     font-size: 14px;
     color: #9ca3af;
 }
 
+/* 題目 */
 .target-text {
-    font-size: 26px;
+    font-size: 28px;
     font-weight: bold;
     margin-top: 10px;
+    line-height: 1.6;
 }
 
+/* 狀態 */
 #status {
     margin-top: 15px;
     font-size: 18px;
     color: #ccc;
 }
 
+/* 辨識結果 */
 #result {
     margin-top: 10px;
-    font-size: 26px;
-    min-height: 40px;
+    min-height: 50px;
 }
 
 /* 按鈕 */
 button {
-    margin-top: 20px;
-    padding: 15px 25px;
-    font-size: 18px;
-    border-radius: 12px;
+
+    margin-top: 25px;
+
+    width: 90px;
+    height: 90px;
+
+    border-radius: 50%;
     border: none;
-    background: linear-gradient(45deg, #ef4444, #f97316);
+
+    font-size: 42px;
+
+    background: linear-gradient(45deg,#ef4444,#f97316);
+
     color: white;
+
     cursor: pointer;
+
+    transition: 0.2s;
 }
 
 button:hover {
-    transform: scale(1.05);
+    transform: scale(1.08);
 }
 </style>
 </head>
@@ -80,23 +94,34 @@ button:hover {
 
 <h2>🎤 語音辨識</h2>
 
-<!-- 要朗讀的句子 -->
+<!-- 題目 -->
 <div class="card target-card">
-    <div id="targetText"></div>
+
+    <div class="target-label">
+        請朗讀：
+    </div>
+
+    <div id="targetText" class="target-text">
+    </div>
+
 </div>
 
-<button onclick="start()">
-🎤 開始錄音
-</button>
-
+<!-- 狀態 -->
 <div id="status">
-請按下按鈕開始說話
+請按下麥克風開始錄音
 </div>
 
 <!-- 辨識結果 -->
 <div class="card result-card">
+
     <div id="result"></div>
+
 </div>
+
+<!-- 錄音 -->
+<button onclick="start()">
+🎤
+</button>
 
 <script>
 
@@ -106,8 +131,11 @@ button:hover {
 window.onerror = function(msg, src, line){
 
     document.body.innerHTML =
+
         "<h2>❌ 發生錯誤</h2>" +
+
         "<pre>" + msg + "</pre>" +
+
         "<p>Line: " + line + "</p>";
 };
 
@@ -123,9 +151,8 @@ const target = params.get("target") || "";
 ========================= */
 window.onload = function(){
 
-    document.getElementById("targetText").innerHTML =
-        "<div class='target-label'>請朗讀：</div>" +
-        "<div class='target-text'>" + target + "</div>";
+    document.getElementById("targetText").innerText =
+        target;
 };
 
 /* =========================
@@ -135,311 +162,54 @@ function normalize(str){
 
     return str
         .toLowerCase()
+        .replace(/-/g," ")
         .replace(/[^\w\s]/g,"")
         .replace(/\s+/g," ")
         .trim();
 }
 
 /* =========================
-   同音字字典
+   同音 / 相似字
 ========================= */
-const homophones = {
+function isSimilarWord(a,b){
 
-    "know": ["no"],
-    "no": ["know"],
+    a = normalize(a);
+    b = normalize(b);
 
-    "write": ["right"],
-    "right": ["write"],
+    if(a === b) return true;
 
-    "sea": ["see"],
-    "see": ["sea"],
+    const homophones = {
 
-    "week": ["weak"],
-    "weak": ["week"],
+        "know": ["no"],
+        "no": ["know"],
 
-    "two": ["to", "too"],
-    "to": ["two", "too"],
-    "too": ["two", "to"],
+        "write": ["right"],
+        "right": ["write"],
 
-    "weather": ["whether"],
-    "whether": ["weather"],
+        "meat": ["meet"],
+        "meet": ["meat"],
 
-    "flower": ["flour"],
-    "flour": ["flower"],
+        "sea": ["see"],
+        "see": ["sea"],
 
-    "son": ["sun"],
-    "sun": ["son"],
+        "here": ["hear"],
+        "hear": ["here"],
 
-    "ate": ["eight"],
-    "eight": ["ate"],
+        "to": ["too","two"],
+        "too": ["to","two"],
+        "two": ["to","too"],
 
-    "one": ["won"],
-    "won": ["one"],
+        "flower": ["flour"],
+        "flour": ["flower"],
 
-    "buy": ["by", "bye"],
-    "by": ["buy", "bye"],
-    "bye": ["buy", "by"],
+        "bye": ["by","buy"],
+        "buy": ["bye","by"],
+        "by": ["buy","bye"]
+    };
 
-    "cell": ["sell"],
-    "sell": ["cell"],
-
-    "dear": ["deer"],
-    "deer": ["dear"],
-
-    "hear": ["here"],
-    "here": ["hear"],
-
-    "hole": ["whole"],
-    "whole": ["hole"],
-
-    "hour": ["our"],
-    "our": ["hour"],
-
-    "mail": ["male"],
-    "male": ["mail"],
-
-    "meet": ["meat"],
-    "meat": ["meet"],
-
-    "pair": ["pear"],
-    "pear": ["pair"],
-
-    "peace": ["piece"],
-    "piece": ["peace"],
-
-    "plain": ["plane"],
-    "plane": ["plain"],
-
-    "read": ["red"],
-    "red": ["read"],
-
-    "road": ["rode"],
-    "rode": ["road"],
-
-    "sail": ["sale"],
-    "sale": ["sail"],
-
-    "tail": ["tale"],
-    "tale": ["tail"],
-
-    "their": ["there", "theyre"],
-    "there": ["their", "theyre"],
-    "theyre": ["their", "there"],
-
-    "wait": ["weight"],
-    "weight": ["wait"],
-
-    "wear": ["where"],
-    "where": ["wear"],
-
-    "which": ["witch"],
-    "witch": ["which"],
-
-    "wood": ["would"],
-    "would": ["wood"],
-
-    "allowed": ["aloud"],
-    "aloud": ["allowed"],
-
-    "brake": ["break"],
-    "break": ["brake"],
-
-    "cent": ["scent", "sent"],
-    "scent": ["cent", "sent"],
-    "sent": ["cent", "scent"],
-
-    "course": ["coarse"],
-    "coarse": ["course"],
-
-    "die": ["dye"],
-    "dye": ["die"],
-
-    "fair": ["fare"],
-    "fare": ["fair"],
-
-    "groan": ["grown"],
-    "grown": ["groan"],
-
-    "knight": ["night"],
-    "night": ["knight"],
-
-    "knew": ["new"],
-    "new": ["knew"],
-
-    "lead": ["led"],
-    "led": ["lead"],
-
-    "made": ["maid"],
-    "maid": ["made"],
-
-    "none": ["nun"],
-    "nun": ["none"],
-
-    "pause": ["paws"],
-    "paws": ["pause"],
-
-    "principal": ["principle"],
-    "principle": ["principal"],
-
-    "rain": ["reign", "rein"],
-    "reign": ["rain", "rein"],
-    "rein": ["rain", "reign"],
-
-    "ring": ["wring"],
-    "wring": ["ring"],
-
-    "role": ["roll"],
-    "roll": ["role"],
-
-    "scene": ["seen"],
-    "seen": ["scene"],
-
-    "sew": ["so", "sow"],
-    "so": ["sew", "sow"],
-    "sow": ["sew", "so"],
-
-    "stair": ["stare"],
-    "stare": ["stair"],
-
-    "steal": ["steel"],
-    "steel": ["steal"],
-
-    "through": ["threw"],
-    "threw": ["through"],
-
-    "waist": ["waste"],
-    "waste": ["waist"],
-
-    "way": ["weigh"],
-    "weigh": ["way"],
-
-    "whose": ["whos"],
-    "whos": ["whose"],
-
-    "blue": ["blew"],
-    "blew": ["blue"],
-
-    "board": ["bored"],
-    "bored": ["board"],
-
-    "capital": ["capitol"],
-    "capitol": ["capital"],
-
-    "ceiling": ["sealing"],
-    "sealing": ["ceiling"],
-
-    "complement": ["compliment"],
-    "compliment": ["complement"],
-
-    "desert": ["dessert"],
-    "dessert": ["desert"],
-
-    "idle": ["idol"],
-    "idol": ["idle"],
-
-    "miner": ["minor"],
-    "minor": ["miner"],
-
-    "morning": ["mourning"],
-    "mourning": ["morning"],
-
-    "passed": ["past"],
-    "past": ["passed"],
-
-    "patience": ["patients"],
-    "patients": ["patience"],
-
-    "profit": ["prophet"],
-    "prophet": ["profit"],
-
-    "stationary": ["stationery"],
-    "stationery": ["stationary"],
-
-    "throne": ["thrown"],
-    "thrown": ["throne"],
-
-    "vain": ["vein"],
-    "vein": ["vain"],
-
-    "warn": ["worn"],
-    "worn": ["warn"]
-};
-/* =========================
-   編輯距離
-========================= */
-function levenshtein(a, b){
-
-    const matrix = [];
-
-    for(let i = 0; i <= b.length; i++){
-        matrix[i] = [i];
-    }
-
-    for(let j = 0; j <= a.length; j++){
-        matrix[0][j] = j;
-    }
-
-    for(let i = 1; i <= b.length; i++){
-
-        for(let j = 1; j <= a.length; j++){
-
-            if(b.charAt(i - 1) === a.charAt(j - 1)){
-
-                matrix[i][j] = matrix[i - 1][j - 1];
-
-            }else{
-
-                matrix[i][j] = Math.min(
-                    matrix[i - 1][j - 1] + 1,
-                    matrix[i][j - 1] + 1,
-                    matrix[i - 1][j] + 1
-                );
-            }
-        }
-    }
-
-    return matrix[b.length][a.length];
-}
-
-/* =========================
-   單字容錯判定
-========================= */
-function shouldFixWord(rawWord, targetWord){
-
-    rawWord = normalize(rawWord);
-
-    targetWord = normalize(targetWord);
-
-    // 完全相同
-    if(rawWord === targetWord){
-        return true;
-    }
-
-    // 同音字修正
     if(
-        homophones[targetWord] &&
-        homophones[targetWord].includes(rawWord)
-    ){
-        return true;
-    }
-
-    // 開頭相同
-    let sameStart =
-        rawWord.charAt(0) === targetWord.charAt(0);
-
-    // 長度接近
-    let lenClose =
-        Math.abs(rawWord.length - targetWord.length) <= 1;
-
-    // 編輯距離
-    let distance =
-        levenshtein(rawWord, targetWord);
-
-    // 拼字小錯誤
-    if(
-        sameStart &&
-        lenClose &&
-        distance <= 1
+        homophones[a] &&
+        homophones[a].includes(b)
     ){
         return true;
     }
@@ -453,12 +223,14 @@ function shouldFixWord(rawWord, targetWord){
 function start(){
 
     const SpeechRecognition =
+
         window.SpeechRecognition ||
         window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
 
         document.getElementById("status").innerText =
+
             "❌ 此裝置不支援語音辨識";
 
         return;
@@ -472,73 +244,61 @@ function start(){
 
     recognition.interimResults = false;
 
-    /* 開始錄音 */
+    /* 開始 */
     recognition.onstart = function(){
 
         document.getElementById("status").innerText =
+
             "🎤 正在聽...";
     };
 
-    /* 辨識成功 */
+    /* 成功 */
     recognition.onresult = function(event){
 
-        let raw =
+        let rawText =
             event.results[0][0].transcript;
 
-        let confidence =
-            event.results[0][0].confidence;
+        let finalText = rawText;
 
-        let finalText = raw;
-
-        let rawWords =
-            normalize(raw).split(/\s+/);
+        /* =========================
+           ⭐ 單字模式修正
+           只有 target 是單字才修正
+        ========================= */
 
         let targetWords =
             normalize(target).split(/\s+/);
 
-        /* =========================
-           單字修正
-        ========================= */
+        let spokenWords =
+            normalize(rawText).split(/\s+/);
+
         if(
-            rawWords.length === 1 &&
-            targetWords.length === 1
+            targetWords.length === 1 &&
+            spokenWords.length <= 2
         ){
 
             if(
-                shouldFixWord(
-                    rawWords[0],
+                isSimilarWord(
+                    spokenWords[0],
                     targetWords[0]
                 )
             ){
-
-                // confidence低才修正
-                if(confidence < 0.96){
-
-                    finalText = target;
-                }
+                finalText = target;
             }
         }
 
-        /* 顯示結果 */
+        /* 顯示辨識結果 */
         document.getElementById("result").innerHTML =
 
-            "<div style='font-size:14px;color:#9ca3af'>你說的是：</div>" +
+            "<div style='font-size:14px;color:#9ca3af;'>你說的是：</div>" +
 
-            "<div style='margin-top:10px;font-weight:bold'>" +
+            "<div style='font-size:32px;font-weight:bold;margin-top:12px;line-height:1.6;'>" +
 
             finalText +
-
-            "</div>" +
-
-            "<div style='margin-top:8px;font-size:13px;color:#9ca3af'>" +
-
-            "辨識信心值：" +
-
-            confidence.toFixed(2) +
 
             "</div>";
 
         document.getElementById("status").innerText =
+
             "完成 ✔";
 
         /* 回主頁 */
@@ -547,12 +307,8 @@ function start(){
             window.opener.postMessage({
 
                 spoken: finalText,
-
-                raw: raw,
-
-                target: target,
-
-                confidence: confidence
+                raw: rawText,
+                target: target
 
             }, "*");
         }
@@ -562,10 +318,10 @@ function start(){
 
             window.close();
 
-        }, 1000);
+        }, 800);
     };
 
-    /* 錯誤 */
+    /* 失敗 */
     recognition.onerror = function(event){
 
         document.getElementById("status").innerText =

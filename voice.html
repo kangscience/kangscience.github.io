@@ -270,8 +270,7 @@ function start(){
         let finalText = rawText;
 
         /* =========================
-           ⭐ 單字模式修正
-           只有 target 是單字才修正
+           ⭐ 單字 / 複合字修正
         ========================= */
 
         let targetWords =
@@ -280,17 +279,34 @@ function start(){
         let spokenWords =
             normalize(rawText).split(/\s+/);
 
+        let isHyphenWord =
+            target.includes("-");
+
         if(
-            targetWords.length === 1 &&
+            (
+                targetWords.length === 1 ||
+                (isHyphenWord && targetWords.length === 2)
+            )
+            &&
             spokenWords.length <= 2
         ){
 
-            if(
-                isSimilarWord(
-                    spokenWords[0],
-                    targetWords[0]
-                )
-            ){
+            let allCorrect = true;
+
+            for(let i=0;i<targetWords.length;i++){
+
+                if(
+                    !spokenWords[i] ||
+                    !isSimilarWord(
+                        spokenWords[i],
+                        targetWords[i]
+                    )
+                ){
+                    allCorrect = false;
+                }
+            }
+
+            if(allCorrect){
                 finalText = target;
             }
         }

@@ -189,32 +189,167 @@ function isSimilarWord(a,b){
 
     const homophones = {
 
-        "know": ["no"],
-        "no": ["know"],
+    /* =====================
+       常用
+    ===================== */
 
-        "write": ["right"],
-        "right": ["write"],
+    "know": ["no"],
+    "no": ["know"],
 
-        "meat": ["meet"],
-        "meet": ["meat"],
+    "write": ["right"],
+    "right": ["write"],
 
-        "sea": ["see"],
-        "see": ["sea"],
+    "meat": ["meet"],
+    "meet": ["meat"],
 
-        "here": ["hear"],
-        "hear": ["here"],
+    "sea": ["see"],
+    "see": ["sea"],
 
-        "to": ["too","two"],
-        "too": ["to","two"],
-        "two": ["to","too"],
+    "here": ["hear"],
+    "hear": ["here"],
 
-        "flower": ["flour"],
-        "flour": ["flower"],
+    "to": ["too","two"],
+    "too": ["to","two"],
+    "two": ["to","too"],
 
-        "bye": ["by","buy"],
-        "buy": ["bye","by"],
-        "by": ["buy","bye"]
-    };
+    "flower": ["flour"],
+    "flour": ["flower"],
+
+    "bye": ["by","buy"],
+    "buy": ["bye","by"],
+    "by": ["buy","bye"],
+
+    /* =====================
+       學生常錯
+    ===================== */
+
+    "one": ["won"],
+    "won": ["one"],
+
+    "ate": ["eight"],
+    "eight": ["ate"],
+
+    "be": ["bee"],
+    "bee": ["be"],
+
+    "blue": ["blew"],
+    "blew": ["blue"],
+
+    "for": ["four"],
+    "four": ["for"],
+
+    "son": ["sun"],
+    "sun": ["son"],
+
+    "week": ["weak"],
+    "weak": ["week"],
+
+    "red": ["read"],
+    "read": ["red"],
+
+    "right": ["write","wright"],
+    "write": ["right"],
+    "wright": ["right"],
+
+    "mail": ["male"],
+    "male": ["mail"],
+
+    "pair": ["pear","pare"],
+    "pear": ["pair","pare"],
+    "pare": ["pair","pear"],
+
+    "their": ["there","theyre"],
+    "there": ["their","theyre"],
+    "theyre": ["their","there"],
+
+    "weather": ["whether"],
+    "whether": ["weather"],
+
+    "which": ["witch"],
+    "witch": ["which"],
+
+    "new": ["knew"],
+    "knew": ["new"],
+
+    "peace": ["piece"],
+    "piece": ["peace"],
+
+    "whole": ["hole"],
+    "hole": ["whole"],
+
+    "hour": ["our"],
+    "our": ["hour"],
+
+    "allowed": ["aloud"],
+    "aloud": ["allowed"],
+
+    "break": ["brake"],
+    "brake": ["break"],
+
+    "buy": ["by","bye"],
+    "by": ["buy","bye"],
+    "bye": ["buy","by"],
+
+    "cell": ["sell"],
+    "sell": ["cell"],
+
+    "dear": ["deer"],
+    "deer": ["dear"],
+
+    "fair": ["fare"],
+    "fare": ["fair"],
+
+    "hear": ["here"],
+    "here": ["hear"],
+
+    "knight": ["night"],
+    "night": ["knight"],
+
+    "meet": ["meat"],
+    "meat": ["meet"],
+
+    "morning": ["mourning"],
+    "mourning": ["morning"],
+
+    "none": ["nun"],
+    "nun": ["none"],
+
+    "plain": ["plane"],
+    "plane": ["plain"],
+
+    "road": ["rode"],
+    "rode": ["road"],
+
+    "role": ["roll"],
+    "roll": ["role"],
+
+    "sale": ["sail"],
+    "sail": ["sale"],
+
+    "scene": ["seen"],
+    "seen": ["scene"],
+
+    "steel": ["steal"],
+    "steal": ["steel"],
+
+    "tail": ["tale"],
+    "tale": ["tail"],
+
+    "waist": ["waste"],
+    "waste": ["waist"],
+
+    "wait": ["weight"],
+    "weight": ["wait"],
+
+    "wear": ["where"],
+    "where": ["wear"],
+
+    "wood": ["would"],
+    "would": ["wood"],
+
+    "write": ["right"],
+    "right": ["write"]
+};
 
     if(
         homophones[a] &&
